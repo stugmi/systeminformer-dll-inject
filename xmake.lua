@@ -3,7 +3,7 @@ add_rules("mode.debug", "mode.release")
 set_languages("c++20")
 target("DllInject")
     set_kind("shared")
-    set_targetdir("out")
+    set_targetdir("build")
     add_files("src/*.cpp")
     add_headerfiles("src/*.h")
 
@@ -22,8 +22,6 @@ target("DllInject")
         {force = true}
     )
 
-    set_warnings("none")
-
-    after_build(function (target)
-        os.cp(target:targetfile(), "C:/Program Files/SystemInformer/plugins/")
-    end)
+    -- after_build(function (target)
+    --     os.cp(target:targetfile(), "C:/Program Files/SystemInformer/plugins/")
+    -- end)
