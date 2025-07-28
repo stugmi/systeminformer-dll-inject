@@ -1,33 +1,11 @@
-// #include "global.h"
-
 #include "plugin.h"
 #include "injector.h"
-// #include "injector.h"
-
-// #include <Windows.h>
-// #include <iostream>
-// #include <fstream>
-// #include <stdio.h>
-// #include <string>
-// #include <TlHelp32.h>
-// #include <winternl.h>
-// #include <ntstatus.h>
-
 
 #ifdef _WIN64
 #define CURRENT_ARCH IMAGE_FILE_MACHINE_AMD64
 #else
 #define CURRENT_ARCH IMAGE_FILE_MACHINE_I386
 #endif
-
-
-// bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, 
-// 	bool ClearHeader = true, 
-// 	bool ClearNonNeededSections = true,
-// 	bool AdjustProtections = true,
-// 	bool SEHExceptionSupport = true,
-// 	DWORD fdwReason = DLL_PROCESS_ATTACH,
-// 	LPVOID lpReserved = 0);
 
 NTSTATUS ManualMapDll(
     _In_ HANDLE ProcessHandle,

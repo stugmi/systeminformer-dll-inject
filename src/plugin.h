@@ -8,51 +8,6 @@
 #include <settings.h>
 #include <phappresource.h>
 
-// #include <stdarg.h>
-// #include <stdio.h>
-
-// #if defined(DISABLE_OUTPUT)
-// #define ILog(data, ...)
-// #else
-// #define ILog(text, ...) \
-//     do { \
-//         wchar_t wformat[1024]; \
-//         wchar_t buffer[1024]; \
-//         MultiByteToWideChar(CP_ACP, 0, text, -1, wformat, 1024); \
-//         swprintf_s(buffer, 1024, wformat, __VA_ARGS__); \
-//         PhLogMessage(PH_LOG_LEVEL_DEBUG, buffer); \
-//         OutputDebugStringW(buffer); \
-//     } while (0)
-// #endif
-
-#define LOG(fmt, ...) PhpLogEntry(PH_LOG_ENTRY_MESSAGE, fmt, __VA_ARGS__)
-#define LOG_PROC(fmt, ...) PhpLogEntry(PH_LOG_ENTRY_PROCESS_CREATE, fmt, __VA_ARGS__)
-
-FORCEINLINE VOID PhpLogEntry(UCHAR type, const char* fmt, ...)
-{
-    char buf[512];
-    va_list args;
-    va_start(args, fmt);
-    _vsnprintf_s(buf, sizeof(buf), _TRUNCATE, fmt, args);
-    va_end(args);
-
-    char prefixBuf[512];
-    _snprintf_s(prefixBuf, sizeof(prefixBuf), _TRUNCATE, "[DLL Injection] %s", buf);
-
-    PPH_STRING msg = PhConvertMultiByteToUtf16(prefixBuf);
-    if (msg)
-    {
-        PhLogMessageEntry(type, msg);
-        PhDereferenceObject(msg);
-    }
-}
-
-
-
-
-
-// #include <hndlinfo.h>
-
 // Plugin identification
 #define PLUGIN_NAME L"ProcessHacker.DllInject"
 
@@ -105,9 +60,32 @@ PVOID GetProcAddressManual(
 );
 
 
-// Global variables
 extern PPH_PLUGIN PluginInstance;
 extern PH_CALLBACK_REGISTRATION MenuItemCallbackRegistration;
 extern PH_CALLBACK_REGISTRATION ProcessMenuInitializingCallbackRegistration;
+
+
+#define LOG(fmt, ...) PhpLogEntry(PH_LOG_ENTRY_MESSAGE, fmt, __VA_ARGS__)
+#define LOG_PROC(fmt, ...) PhpLogEntry(PH_LOG_ENTRY_PROCESS_CREATE, fmt, __VA_ARGS__)
+
+FORCEINLINE VOID PhpLogEntry(UCHAR type, const char* fmt, ...)
+{
+    char buf[512];
+    va_list args;
+    va_start(args, fmt);
+    _vsnprintf_s(buf, sizeof(buf), _TRUNCATE, fmt, args);
+    va_end(args);
+
+    char prefixBuf[512];
+    _snprintf_s(prefixBuf, sizeof(prefixBuf), _TRUNCATE, "[DLL Injection] %s", buf);
+
+    PPH_STRING msg = PhConvertMultiByteToUtf16(prefixBuf);
+    if (msg)
+    {
+        PhLogMessageEntry(type, msg);
+        PhDereferenceObject(msg);
+    }
+}
+
 
 #endif // _PLUGIN_H
