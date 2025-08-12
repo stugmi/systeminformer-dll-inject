@@ -1,10 +1,11 @@
+# .github/workflows/build.yml
 name: xmake-build
 
 on:
   push:
-    branches: ["**"]
+    branches: [ "**" ]
   pull_request:
-    branches: ["**"]
+    branches: [ "**" ]
   workflow_dispatch:
 
 jobs:
@@ -14,25 +15,52 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [release]
+        arch: [x64]  # add x86 if you actually support it
     defaults:
       run:
         shell: pwsh
+
     steps:
-      - name: Checkout project
+      - name: Checkout
         uses: actions/checkout@v4
-      - name: Clone System Informer SDK
+
+      - name: Setup XMake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: latest
+
+      - name: Show toolchain
         run: |
-          git clone --depth=1 https://github.com/winsiderss/systeminformer.git systeminformer
-      - name: Patch xmake.lua include/link paths
+          xmake --version
+          cl /?
+        continue-on-error: true
+
+      # Cache xmake’s state (packages, config) + your build dir to speed up rebuilds
+      - name: Cache xmake + build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.xmake
+            build
+          key: ${{ runner.os }}-xmake-${{ matrix.arch }}-${{ matrix.build_type }}-${{ hashFiles('xmake.lua', '**/*.lua', 'xmake-requires.txt', 'xmake-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-xmake-${{ matrix.arch }}-${{ matrix.build_type }}-
+            ${{ runner.os }}-xmake-
+
+      # Configure
+      - name: xmake config
         run: |
-          (Get-Content xmake.lua) -replace 'S:/gits/systeminformer', '${{ github.workspace }}/systeminformer' |
-            Set-Content xmake.lua
-      - name: Build
-        run: xmake -b
-      - name: Upload artifacts
+          xmake f --policies=build.ccache:y
+
+      # Build (verbose + diagnostics on failures)
+      - name: xmake build
+        run: xmake
+
+      # Collect artifacts (targetdir is "build" in your xmake.lua)
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: DllInject-${{ matrix.build_type }}-x64
+          name: DllInject-${{ matrix.build_type }}-${{ matrix.arch }}
           path: |
             build/**
           if-no-files-found: error
