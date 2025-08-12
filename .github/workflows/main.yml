@@ -1,0 +1,55 @@
+name: xmake-build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [release, debug]
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Clone System Informer SDK
+        run: |
+          git clone --depth=1 https://github.com/winsiderss/systeminformer.git systeminformer
+
+      - name: Patch xmake.lua include/link paths
+        run: |
+          (Get-Content xmake.lua) -replace 'S:/gits/systeminformer', '${{ github.workspace }}/systeminformer' |
+            Set-Content xmake.lua
+
+      - name: Setup xmake with caches
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: latest
+          actions-cache-folder: .xmake-cache
+          actions-cache-key: ${{ runner.os }}-xmake-core
+          package-cache: true
+          package-cache-key: ${{ runner.os }}-xmake-pkgs-${{ hashFiles('xmake.lua', '**/*.lua', 'xmake-requires.txt', 'xmake-lock.json') }}
+          project-path: .
+          build-cache: true
+          build-cache-key: ${{ runner.os }}-xmake-bld-${{ matrix.build_type }}
+
+      - name: Build
+        run: xmake -b
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DllInject-${{ matrix.build_type }}-x64
+          path: |
+            build/**
+          if-no-files-found: error
